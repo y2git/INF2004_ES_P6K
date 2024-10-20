@@ -1,5 +1,5 @@
 
-C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K_test/build/test.elf:     file format elf32-littlearm
+C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/test.elf:     file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
@@ -43,20 +43,20 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  19 .debug_ranges 00005400  00000000  00000000  00044488  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line   0001dd94  00000000  00000000  00049888  2**0
+ 20 .debug_line   0001dd76  00000000  00000000  00049888  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_str    00009861  00000000  00000000  0006761c  2**0
+ 21 .debug_str    0000984d  00000000  00000000  000675fe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_frame  00003644  00000000  00000000  00070e80  2**2
+ 22 .debug_frame  00003644  00000000  00000000  00070e4c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 23 .debug_loc    0001cd06  00000000  00000000  000744c4  2**0
+ 23 .debug_loc    0001cd06  00000000  00000000  00074490  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 24 .debug_line_str 0000029c  00000000  00000000  000911ca  2**0
+ 24 .debug_line_str 00000297  00000000  00000000  00091196  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 25 .debug_rnglists 0000027a  00000000  00000000  00091466  2**0
+ 25 .debug_rnglists 0000027a  00000000  00000000  0009142d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
-C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K_test/build/test.elf:     file format elf32-littlearm
+C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/test.elf:     file format elf32-littlearm
 
 
 Disassembly of section .boot2:

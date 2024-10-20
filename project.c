@@ -17,8 +17,12 @@ int main() {
 
     printf("alive\n");
     // Wait for user to press 'enter' to continue
+    // Baud rate 115200 on serial monitor
+    // Line ending LF, CR or CRLF on serial monitor to send newline
+    // or change start key to something else
     printf("\r\nSD card test. Press 'enter' to start.\r\n");
     while (true) {
+        printf("Received: %c (%d)\r\n", buf[0], buf[0]);
         buf[0] = getchar();
         if ((buf[0] == '\r') || (buf[0] == '\n')) {
             break;

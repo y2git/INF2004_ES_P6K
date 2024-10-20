@@ -1,4 +1,4 @@
-// Padded and checksummed version of: C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K_test/build/pico-sdk/src/rp2040/boot_stage2/bs2_default.bin
+// Padded and checksummed version of: C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/pico-sdk/src/rp2040/boot_stage2/bs2_default.bin
 
 .cpu cortex-m0plus
 .thumb
