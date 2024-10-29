@@ -18,6 +18,7 @@ include(pico_sdk_import.cmake)
 # Name projects
 project(project C CXX ASM)
 project(test C CXX ASM)
+project(buddy2 C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -25,6 +26,7 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(project project.c )
 add_executable(test test.c )
+add_executable(buddy2 buddy2.c )
 
 # tell CMake where to find other source code
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
@@ -36,6 +38,7 @@ pico_set_program_version(project "0.1")
 pico_enable_stdio_uart(project 0)
 pico_enable_stdio_usb(project 1)
 pico_enable_stdio_usb(test 1)
+pico_enable_stdio_usb(buddy2 1)
 
 # Add the standard library to the build
 target_link_libraries(project
@@ -46,6 +49,18 @@ target_link_libraries(test
         pico_stdlib
         FatFs_SPI
         )
+target_link_libraries(buddy2
+        pico_stdlib
+        FatFs_SPI
+        hardware_spi
+        hardware_gpio
+        hardware_pwm
+        hardware_adc
+        hardware_i2c
+        hardware_timer
+        hardware_irq
+        kissfft
+        )
 # Add the standard include files to the build
 target_include_directories(project PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
@@ -54,4 +69,4 @@ target_include_directories(project PRIVATE
 
 pico_add_extra_outputs(project)
 pico_add_extra_outputs(test)
-
+pico_add_extra_outputs(buddy2)
