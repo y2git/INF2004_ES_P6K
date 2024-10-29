@@ -13,7 +13,7 @@ int main() {
     stdio_usb_init();
 
     //Set buttons
-    gpio_set_dir(BTN_PIN, GPIO_IN);
+    gpio_set_dir(BTN_PIN, GPIO_IN);vjhfv nfhgfjhv 
     gpio_set_pulls(BTN_PIN, true, false);
 
     //Set UART
