@@ -1,3 +1,21 @@
+// Buddy 2: Digital/Analog Signal Monitor and Analysis
+/*
+1. Analog Signal Monitoring:
+    - signal digitization
+    - frequency analysis (FFT)
+    - signal metrics: rms, peak-to-peak, snr
+2. Digital Signal Monitoring:
+    - PWM detection
+*/
+/* Week 10 Deliverables: Capture 10 pulses accurately,
+   measure and display the Analog/PWM frequency and duty cycle
+*/
+
+// Capture a sequence of 10 digital pulses on input pin GP2 (stored on microSD)
+// Exact 10 can be reproduced on output pin GP3 (executed twice)
+/* Analyze and Display Analog (GP26) and PWM (GP7) frequency (for both Analog and PWM)
+and duty cycle (for PWM) */
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -6,7 +24,7 @@
 #include "hardware/adc.h"
 #include "hardware/pwm.h"
 #include "hardware/irq.h"
-#include "kiss_fft.h" // KISS FFT library
+#include "lib/kissfft/kiss_fft.h" // KISS FFT library
 
 #define PULSE_INPUT_PIN 2         // GP2 for digital pulse input
 #define PULSE_OUTPUT_PIN 3        // GP3 for digital pulse output
@@ -151,11 +169,23 @@ int main() {
         float noise_power = 0.01;
         float snr = calculate_snr(signal_power, noise_power);
 
+        printf("--- Week 10: ADC & PWM Results ---\n");
+        for (int i = 0; i < NUM_PULSES; i++) {
+            uint16_t adc_value = adc_read();
+            float voltage = (adc_value / 4095.0) * 3.3;
+            unsigned int pulse_width = pulse_timestamps[i + 1] - pulse_timestamps[i];
+            measure_pwm_signal();
+            
+            printf("Pulse %d:\n", i + 1);
+            printf("  Raw ADC Value: %u\n", adc_value);
+            printf("  Converted Voltage: %.2f V\n", voltage);
+            printf("  Pulse Width: %u microseconds\n", pulse_width);
+            printf("  PWM Frequency: %.2f Hz\n", analog_freq);
+            printf("  Duty Cycle: %.2f %%\n", (pulse_width / (float)pulse_timestamps[i]) * 100);
+        }
         printf("RMS: %.2f V\n", rms_value);
         printf("Peak-to-Peak: %.2f V\n", peak_to_peak);
         printf("SNR: %.2f dB\n", snr);
-
-        measure_pwm_signal();
 
         sleep_ms(1000);
     }

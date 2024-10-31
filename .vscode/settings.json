@@ -23,18 +23,7 @@
   },
   "cmake.generator": "Ninja",
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-  "cmake.useCMakePresets": "auto",
-  "cmake.sourceDirectory": "${workspaceFolder}",
-  "cmake.cmakePath": "C:\\Program Files\\Raspberry Pi\\Pico SDK v1.5.1\\cmake\\bin\\cmake.exe",
   "files.associations": {
-    "*.embeddedhtml": "html",
-    "test,py": "python",
-    "stdio.h": "c",
-    "gpio.h": "c",
-    "cyw43_arch.h": "c",
-    "stdlib.h": "c",
-    "adc.h": "c",
-    "uart.h": "c"
-  },
-  "cmake.useVsDeveloperEnvironment": "auto"
+    "kiss_fft.h": "c"
+  }
 }

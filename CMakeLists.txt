@@ -8,65 +8,53 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
-# Current pico_sdk is from device environment variables
 
+# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
+if(WIN32)
+    set(USERHOME $ENV{USERPROFILE})
+else()
+    set(USERHOME $ENV{HOME})
+endif()
+set(sdkVersion 2.0.0)
+set(toolchainVersion 13_2_Rel1)
+set(picotoolVersion 2.0.0)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
+endif()
+# ====================================================================================
 set(PICO_BOARD pico_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-# Name projects
-project(project C CXX ASM)
-project(test C CXX ASM)
+#project(project C CXX ASM)
+#project(test C CXX ASM)
 project(buddy2 C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
-add_executable(project project.c )
-add_executable(test test.c )
-add_executable(buddy2 buddy2.c )
+add_executable(buddy2
+        buddy2.c
+        )
 
-# tell CMake where to find other source code
+add_library(kissfft STATIC
+        lib/kissfft/kissfft/kiss_fft.c
+        lib/kissfft/kissfft/kiss_fftr.c
+        )
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
 
-pico_set_program_name(project "project") 
-pico_set_program_version(project "0.1")
-
-# Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(project 0)
-pico_enable_stdio_usb(project 1)
-pico_enable_stdio_usb(test 1)
+# enable usb
 pico_enable_stdio_usb(buddy2 1)
 
-# Add the standard library to the build
-target_link_libraries(project
-        pico_stdlib
-        FatFs_SPI
-        )
-target_link_libraries(test
-        pico_stdlib
-        FatFs_SPI
-        )
-target_link_libraries(buddy2
-        pico_stdlib
-        FatFs_SPI
-        hardware_spi
-        hardware_gpio
-        hardware_pwm
-        hardware_adc
-        hardware_i2c
-        hardware_timer
-        hardware_irq
-        kissfft
-        )
-# Add the standard include files to the build
-target_include_directories(project PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-)
+target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft/kissfft)
+    
+target_link_libraries(buddy2 pico_stdlib hardware_adc hardware_pwm hardware_timer hardware_i2c hardware_spi hardware_gpio kissfft)
 
-pico_add_extra_outputs(project)
-pico_add_extra_outputs(test)
+# create map/bin/hex file etc.
 pico_add_extra_outputs(buddy2)
+
+# add url via pico_set_program_url
+
+
