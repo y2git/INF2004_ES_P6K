@@ -52,6 +52,7 @@ target_include_directories(project PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
+# create map/bin/hex file etc.
 pico_add_extra_outputs(project)
 pico_add_extra_outputs(test)
 
