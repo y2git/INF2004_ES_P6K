@@ -37,7 +37,8 @@
     "uart.h": "c",
     "project.h": "c",
     "sd_card.h": "c",
-    "buddy1.h": "c"
+    "buddy1.h": "c",
+    "buddy2.h": "c"
   },
   "cmake.useVsDeveloperEnvironment": "auto"
 }

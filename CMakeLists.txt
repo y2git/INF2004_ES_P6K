@@ -32,8 +32,8 @@ add_executable(buddy2 buddy2.c)
 # tell CMake where to find other source code
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
 add_library(kissfft STATIC
-        lib/kissfft/kissfft/kiss_fft.c
-        lib/kissfft/kissfft/kiss_fftr.c
+        lib/kissfft/kiss_fft.c
+        lib/kissfft/kiss_fftr.c
         )
 
 pico_set_program_name(project "project") 
@@ -49,6 +49,13 @@ pico_enable_stdio_usb(buddy2 1)
 target_link_libraries(project
         pico_stdlib
         FatFs_SPI
+        hardware_adc 
+        hardware_pwm 
+        hardware_timer 
+        hardware_i2c 
+        hardware_spi 
+        hardware_gpio 
+        kissfft
         )
 target_link_libraries(test
         pico_stdlib
@@ -69,7 +76,7 @@ target_include_directories(project PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
-target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft/kissfft)
+target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft)
 
 
 # create map/bin/hex file etc.
