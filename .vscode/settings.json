@@ -34,7 +34,9 @@
     "cyw43_arch.h": "c",
     "stdlib.h": "c",
     "adc.h": "c",
-    "uart.h": "c"
+    "uart.h": "c",
+    "project.h": "c",
+    "sd_card.h": "c"
   },
   "cmake.useVsDeveloperEnvironment": "auto"
 }

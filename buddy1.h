@@ -9,7 +9,7 @@ FATFS fs; //filesystem object for the SD card.
 FIL fil; //file object used for reading/writing files.
 int ret; //Stores return values
 char buf[100]; //A buffer used for reading data from the SD card.
-char filename[] = "test02.txt"; //filename to be created
+char filename[]; //filename to be created
 
 void readfile(char filename[]){
     // Open file for reading
@@ -67,7 +67,7 @@ void writefile(char filename[]){
     }
 }
 
-int main() {
+int asd() {
     // Initialize chosen serial port
     stdio_init_all();
 
