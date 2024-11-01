@@ -48,41 +48,13 @@ const char *cgi_send_data_handler(int iIndex, int iNumParams, char *pcParam[], c
     return "/index.shtml";
 }
 
-// New CGI for getidcode
-const char *cgi_idcode_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    static char idcodeResponse[32];
-
-    // Check if an idcode request has been made (/idcode.cgi?idcode=1)
-    if (strcmp(pcParam[0], "idcode") == 0)
-    {
-        if (strcmp(pcValue[0], "1") == 0)
-        {
-            // Retrieve idcode from DUT
-            const char *idcode = "12345";
-            snprintf(idcodeResponse, sizeof(idcodeResponse), "/idcode.shtml?idcode=%s", idcode);
-
-            // Print the received data to the serial monitor
-            printf("Received idcode: %s\n", received_idcode);
-
-            // Return the response with the idcode embedded
-            return idcodeResponse;
-        }
-    }
-
-    // Send the index page back to the user if no idcode request
-    return "/index.shtml";
-}
-
 // tCGI Struct
 // Add both CGI handlers for LED control and data submission
 static const tCGI cgi_handlers[] = {
     {// HTML request for "/led.cgi" triggers cgi_led_handler
      "/led.cgi", cgi_led_handler},
     {// HTML request for "/senddata.cgi" triggers cgi_send_data_handler
-     "/senddata.cgi", cgi_send_data_handler},
-    {// HTML request for "/getidcode.cgi" triggers cgi_idcode_handler
-     "/getidcode.cgi", cgi_idcode_handler}};
+     "/senddata.cgi", cgi_send_data_handler}};
 
 // Initialize CGI handlers
 void cgi_init(void)

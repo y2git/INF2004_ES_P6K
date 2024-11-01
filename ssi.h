@@ -2,6 +2,8 @@
 #include "pico/cyw43_arch.h"
 #include "hardware/adc.h"
 
+#include "swd_debugger.h"
+
 // SSI tags 
 const char *ssi_tags[] = {"volt", "temp", "led", "idcode", "data"}; 
 
@@ -37,6 +39,8 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen) {
 
         case 3: // device-id 
         {
+             strncpy(received_idcode, get_idcode(), sizeof(received_idcode) - 1);
+            received_idcode[sizeof(received_idcode) - 1] = '\0'; // Ensure null-termination
             printed = snprintf(pcInsert, iInsertLen, "%s", received_idcode);
         }
         break;

@@ -70,6 +70,7 @@ void main()
     init_http_server();      // Initialize the web server
     init_ssi_cgi_handlers(); // Configure SSI and CGI handlers
     print_network_info();    // Print network interface information
+    initSwdPins();
 
     while (1)
     {
