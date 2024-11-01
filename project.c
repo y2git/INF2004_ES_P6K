@@ -80,7 +80,7 @@ int main() {
     }
     printf("RMS: %.2f V\n", rms_value);
     printf("Peak-to-Peak: %.2f V\n", peak_to_peak);
-        printf("SNR: %.2f dB\n", snr);
+    printf("SNR: %.2f dB\n", snr);
 
 
     // Unmount drive
