@@ -1,5 +1,7 @@
 C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/project.dir
 C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/test.dir
+C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/buddy2.dir
+C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/kissfft.dir
 C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/edit_cache.dir
 C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/CMakeFiles/rebuild_cache.dir
 C:/Users/YongYao/Documents/Pico-v1.5.1/INF2004_ES_P6K/build/pico-sdk/CMakeFiles/edit_cache.dir
