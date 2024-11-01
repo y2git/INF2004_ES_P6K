@@ -4,6 +4,8 @@
 int main() {
     char buf[100]; //A buffer used for reading data from the SD card.
     char filename[] = "test03.txt"; //filename to be created
+    char text[] = "blah blah blah"; //text to write to file
+
     // Initialize chosen serial port
     stdio_init_all();
 
@@ -31,8 +33,9 @@ int main() {
     if (fr != FR_OK) {
         printf("ERROR: Could not mount filesystem (%d)\r\n", fr);
     }
+    
     //main code
-    writefile(filename);
+    writefile(filename, text);
     readfile(filename);
 
     // Unmount drive
