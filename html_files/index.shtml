@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicoW Webserver Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <h1>Dashboard</h1>
+    <h2 id="status">Communication between Pico W and PC.</h2>
+
+    <div class="dashboard">
+        <!-- Send Data Section -->
+        <div class="card">
+            <h3>Send Data:</h3>
+            <form action="/senddata.cgi" method="GET">
+                <label for="data">Enter Data:</label>
+                <input type="text" id="data" name="data" maxlength="" required>
+                <button type="submit">Send Data</button>
+            </form>
+            <h3>Received Data: </h3>
+            <p><!--#data--></p>
+
+        </div>
+
+        <!-- Voltage Data Section -->
+        <div class="card">
+            <h3>Voltage:</h3>
+            <p>Current Voltage: <!--#volt--></p>
+
+            <h3>Temperature:</h3>
+            <p>Current Temperature (°C): <!--#temp--></p>
+
+            <h3>LED Status:</h3>
+            <p>LED is currently: <!--#led--></p>
+            <a href="/led.cgi?led=1"><button>LED ON</button></a>
+            <a href="/led.cgi?led=0"><button>LED OFF</button></a>
+        </div>
+
+        <!-- Pulse Width Measurement & ADC Section -->
+        <div class="card">
+            <h3>Pulse Width Measurement & ADC</h3>
+            <p>Pulse Width: <span id="pulse-width">0</span></p>
+            <p>ADC Value: <span id="adc-value">0</span></p>
+        </div>
+
+        <!-- PWM Control Section -->
+        <div class="card">
+            <h3>PWM Control</h3>
+            <p>PWM Duty Cycle: <span id="pwm-duty-cycle">0</span></p>
+            <p>PWM Frequency: <span id="pwm-frequency">0</span></p>
+        </div>
+
+        <!-- microSD Card Read/Write Section -->
+        <div class="card">
+            <h3>microSD Card Read/Write</h3>
+            <p>Status: Waiting for data transfer...</p>
+        </div>
+
+        <!-- PicoProbe Debugging (SWD) Section -->
+        <div class="card">
+            <h3>PicoProbe Debugging (SWD)</h3>
+            <p>Device ID Code: <span id="device-id"><!--#idcode--></span></p>
+            <a href="/getidcode.cgi?idcode=1"><button>Get IDCODE</button></a>
+        </div>
+    </div>
+</body>
+
+</html>

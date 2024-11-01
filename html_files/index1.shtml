@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PicoW Webserver</title>
+</head>
+
+<body>
+    <h1>Dashboard</h1>
+    <h2 id="status">Communication between Pico W and PC...</h2>
+    <p>Goal: Allow Wifi connectivity
+        Configure, control, monitor,
+        remote data logging, signal capture, signal generation
+    </p>
+    <p>Dashboard Display:</p>
+
+    <form action="/senddata.cgi" method="get">
+        <label for="data">Enter Data:</label>
+        <input type="text" id="data" name="data" maxlength="" required>
+        <button type="submit">Send Data</button>
+    </form>
+
+
+    <h2>Signal Controls:</h2>
+    <a href="/led.cgi?led=1"><button>LED ON</button></a>
+    <a href="/led.cgi?led=0"><button>LED OFF</button></a>
+
+    <br>
+    <br>
+
+
+</body>
+
+</html>
