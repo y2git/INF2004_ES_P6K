@@ -35,8 +35,11 @@ void readfile(char filename[]){
 }
 
 void writefile(char filename[], char text[]){
+    //printf("%s", text);
     // Open file for writing ()
-    fr = f_open(&fil, filename, FA_WRITE | FA_OPEN_APPEND);
+    //FA_CREATE_ALWAYS = write
+    //FA_OPEN_APPEND = append
+    fr = f_open(&fil, filename, FA_WRITE | FA_CREATE_ALWAYS);
     if (fr != FR_OK) {
         printf("ERROR: Could not open file (%d)\r\n", fr);
         while (true);
