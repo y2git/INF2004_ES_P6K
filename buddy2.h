@@ -24,15 +24,23 @@ and duty cycle (for PWM) */
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
 #include "hardware/timer.h"
+//#include "lib/kissfft/kiss_fft.h" // KISS FFT library
 
 // GPIO Definitions
 #define ADC_PIN 26   // GP26 for ADC input
-#define PWM_PIN 7    // GP7 for PWM signal measurement
-#define PULSE_PIN 2  // GP2 for pulse input
+//#define PULSE_OUTPUT_PIN 3        // GP3 for digital pulse output
+#define ANALOG_PIN 26               // GP26 for analog signal
+#define PWM_PIN 7                   // GP7 for PWM signal measurement
+#define PULSE_PIN 2                 // GP2 for pulse input
 
 // Constants for measurements
-#define NUM_PULSES 10
+#define NUM_PULSES 10             // Number of digital pulses to capture
+#define PLAYBACK_COUNT 2          // Number of times to playback captured pulses
 #define ADC_SAMPLE_RATE_MS 5
+
+//#define FFT_SIZE 256              // FFT size for frequency analysis
+//#define ADC_SAMPLING_RATE 5000    // ADC sampling rate for FFT
+
 
 // Global Variables
 volatile int pulse_count = 0;
@@ -42,6 +50,29 @@ uint16_t adc_result = 0;
 float analog_frequency = 0.0;
 float pwm_frequency = 0.0;
 float pwm_duty_cycle = 0.0;
+
+//uint32_t pulse_timestamps[NUM_PULSES]; // Array to store timestamps of captured pulses
+//uint8_t pulse_count = 0;               // Counter for captured pulses
+//bool recording = true;                 // Flag to indicate recording state
+//static int16_t adc_samples[FFT_SIZE];  // Store ADC samples globally for analysis
+
+// Interrupt handler for capturing digital pulses on GP2
+void pulse_capture_callback(uint gpio, uint32_t events) {
+    if (recording && pulse_count < NUM_PULSES) {
+        pulse_timestamps[pulse_count++] = to_ms_since_boot(get_absolute_time());
+    }
+}
+
+// Playback captured pulses on GP3
+//void playback_pulses() {
+//    for (int i = 0; i < PLAYBACK_COUNT; i++) {
+//        for (int j = 0; j < NUM_PULSES - 1; j++) {
+//            gpio_put(PULSE_OUTPUT_PIN, 1);
+//            sleep_ms(pulse_timestamps[j + 1] - pulse_timestamps[j]);
+//            gpio_put(PULSE_OUTPUT_PIN, 0);
+//        }
+//    }
+//}
 
 // ADC Sampling Timer Callback
 bool sample_adc_callback(repeating_timer_t* rt) {
@@ -104,58 +135,3 @@ void pulse_isr(uint gpio, uint32_t events) {
     }
 }
 
-int main() {
-    // Initialize stdio for serial communication
-    stdio_init_all();
-    sleep_ms(1000); // Give time for serial initialization
-
-    // Setup ADC on GP26
-    adc_init();
-    adc_gpio_init(ADC_PIN);         // Initialize GP26 for ADC input
-    adc_select_input(0);            // Select ADC channel 0 (GP26)
-
-    // Timer for ADC sampling every 5ms (200 Hz sampling rate)
-    repeating_timer_t adc_timer;
-    add_repeating_timer_ms(ADC_SAMPLE_RATE_MS, sample_adc_callback, NULL, &adc_timer);
-
-    // Setup PWM measurement on GP7
-    gpio_set_irq_enabled_with_callback(PWM_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &pwm_isr);
-
-    // Setup digital pulse input on GP2
-    gpio_set_irq_enabled_with_callback(PULSE_PIN, GPIO_IRQ_EDGE_RISE, true, &pulse_isr);
-
-    // Notify that the system is waiting for pulses
-    printf("Waiting for pulses to be captured on GP2...\n");
-
-    // Wait for pulse capture to complete
-    while (!pulse_complete) {
-        tight_loop_contents();  // Keeps the CPU busy
-    }
-
-    // Check if all pulses were captured
-    if (pulse_count < NUM_PULSES) {
-        printf("Warning: Only %d out of %d pulses were captured. Some pulses may have been missed.\n", pulse_count, NUM_PULSES);
-    }
-    else {
-        printf("All %d pulses successfully captured.\n", NUM_PULSES);
-    }
-
-    // Display and analyze results
-    printf("\n--- Week 10: ADC & PWM Results ---\n");
-    char text[4096] = "";
-    const float conversion_factor = 3.3f / (1 << 12);
-    // Store and display results for each pulse
-    for (int i = 0; i < pulse_count; i++) {
-        // Append formatted output for each pulse into the text buffer
-        snprintf(text + strlen(text), sizeof(text) - strlen(text),
-            "Pulse %d:\nRaw ADC Value: %d\nConverted Voltage: %.2f V\nPulse Width: %u us\n"
-            "PWM Frequency: %.2f Hz\nDuty Cycle: %.2f%%\nAnalog Frequency: %.2f Hz\n\n",
-            i + 1, adc_result, adc_result * conversion_factor, pulse_times[i],
-            pwm_frequency, pwm_duty_cycle, analog_frequency);
-    }
-
-    // Print the entire content of the text buffer
-    printf("%s", text);
-
-    return 0;
-}
