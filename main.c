@@ -70,7 +70,12 @@ void main()
     init_http_server();      // Initialize the web server
     init_ssi_cgi_handlers(); // Configure SSI and CGI handlers
     print_network_info();    // Print network interface information
+    stdio_init_all();
+    sleep_ms(1000); // Allow time for serial connection to initialize
     initSwdPins();
+    swdInitialOp();
+    swdInitialOp();
+    printf("0x%08X\n",device_idcode);
 
     while (1)
     {

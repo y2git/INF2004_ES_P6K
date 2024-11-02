@@ -10,6 +10,7 @@ const char *ssi_tags[] = {"volt", "temp", "led", "idcode", "data"};
 // Global variable to store the received ID code
 char received_idcode[100];
 char received_data[100];
+uint32_t idcode_hex;
 
 
 u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen) {
@@ -39,9 +40,24 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen) {
 
         case 3: // device-id 
         {
-             strncpy(received_idcode, get_idcode(), sizeof(received_idcode) - 1);
-            received_idcode[sizeof(received_idcode) - 1] = '\0'; // Ensure null-termination
-            printed = snprintf(pcInsert, iInsertLen, "%s", received_idcode);
+         {
+        // Get idcode in hex
+        idcode_hex = device_idcode;
+
+        // Convert to string
+        snprintf(received_idcode, sizeof(received_idcode), "0x%08X", idcode_hex);
+
+        // Check if buffer is almost full, shift content if needed
+        if (strlen(received_idcode) >= sizeof(received_idcode) - 1)
+        {
+            // Shift left to make room
+            memmove(received_idcode, received_idcode + 10, sizeof(received_idcode) - 10);
+            received_idcode[sizeof(received_idcode) - 1] = '\0';
+        }
+
+        // received_idcode[sizeof(received_idcode) - 1] = '\0'; // Ensure null-termination
+        printed = snprintf(pcInsert, iInsertLen, "%s", received_idcode);
+    }
         }
         break;
 
