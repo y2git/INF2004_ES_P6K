@@ -4,7 +4,7 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/timer.h"
-//#include "ff_sd_spi.h" // CarlK3's library for SD card SPI handling
+#include "ff.h"  // FatFS library for file handling
 
 // Pin definitions
 #define PULSE_OUTPUT_PIN 3
@@ -48,7 +48,6 @@ int main() {
         if (!gpio_get(BUTTON_PIN)) {
             // Button pressed, play pulses
             play_pulses();
-            sleep_ms(200); // Debounce delay to avoid multiple triggers(can remove when sd work)
         }
 
         // Call baud rate detection (you may want to call this less frequently in real applications)
@@ -67,52 +66,35 @@ void initialize_pins() {
     gpio_pull_up(BUTTON_PIN);
 }
 
-//void initialize_sd_card() {
-    // Initialize the SD card via CarlK3's library
-    //if (sd_init_derived(SD_CARD_SPI_PORT, SD_CARD_MISO_PIN, SD_CARD_MOSI_PIN, SD_CARD_SCK_PIN, SD_CARD_CS_PIN) != FR_OK) {
-        //printf("SD Card initialization failed.\n");
-    //}
-
-    // Mount the file system
-    //if (f_mount(&fs, "", 1) != FR_OK) {
-        //printf("SD Card mount failed.\n");
-    //} else {
-        //printf("SD Card mounted successfully.\n");
-    //}
-//}
+void initialize_sd_card() {
+    // Mount SD card and check if it's accessible
+    FATFS fs;
+    if (f_mount(&fs, "", 1) != FR_OK) {
+        printf("SD Card mount failed.\n");
+    } else {
+        printf("SD Card mounted successfully.\n");
+    }
+}
 
 // Read pulses from the file and output them on PULSE_OUTPUT_PIN
-//void play_pulses() {
-    //FIL file;
-    //char line[32];
-    //UINT br;
-
-    //if (f_open(&file, PULSE_FILE_PATH, FA_READ) == FR_OK) {
-        //int pulse_count = 0;
-        //while (pulse_count < 10 && f_gets(line, sizeof(line), &file)) {
-            //int pulse_length = atoi(line);
-            //gpio_put(PULSE_OUTPUT_PIN, 1);
-            //sleep_us(pulse_length);
-            //gpio_put(PULSE_OUTPUT_PIN, 0);
-            //sleep_us(pulse_length);
-            //pulse_count++;
-        //}
-        //f_close(&file);
-    //} else {
-        //printf("Failed to open pulse file.\n");
-    //}
-//}
-
-// Play a hardcoded sequence of 10 pulses on PULSE_OUTPUT_PIN (GP3)
 void play_pulses() {
-    int pulse_durations[] = {1000, 500, 1000, 500, 1000, 500, 1000, 500, 1000, 500}; // Pulse durations in microseconds
-    int pulse_count = sizeof(pulse_durations) / sizeof(pulse_durations[0]);
+    FIL file;
+    char line[32];
+    UINT br;
 
-    for (int i = 0; i < pulse_count; i++) {
-        gpio_put(PULSE_OUTPUT_PIN, 1);   // Set GP3 high
-        sleep_us(pulse_durations[i]);    // Wait for high pulse duration
-        gpio_put(PULSE_OUTPUT_PIN, 0);   // Set GP3 low
-        sleep_us(pulse_durations[i]);    // Wait for low pulse duration
+    if (f_open(&file, PULSE_FILE_PATH, FA_READ) == FR_OK) {
+        int pulse_count = 0;
+        while (pulse_count < 10 && f_gets(line, sizeof(line), &file)) {
+            int pulse_length = atoi(line);
+            gpio_put(PULSE_OUTPUT_PIN, 1);
+            sleep_us(pulse_length);
+            gpio_put(PULSE_OUTPUT_PIN, 0);
+            sleep_us(pulse_length);
+            pulse_count++;
+        }
+        f_close(&file);
+    } else {
+        printf("Failed to open pulse file.\n");
     }
 }
 
@@ -132,3 +114,4 @@ void uart_rx_callback() {
         // Handle received character
     }
 }
+
