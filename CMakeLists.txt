@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-add_subdirectory(no-OS-FatFS-SD-SPI-RPi-Pico)
-
 add_executable(buddy3 buddy3.c)
 
 # Enable stdio and FatFS library
