@@ -138,20 +138,17 @@ char* buddy2() {
 
     // Display and analyze results
     printf("\n--- Week 10: ADC & PWM Results ---\n");
-    static char text[5000] = "";
+    static char results[5000] = "";
     const float conversion_factor = 3.3f / (1 << 12);
     // Store and display results for each pulse
     for (int i = 0; i < pulse_count; i++) {
         // Append formatted output for each pulse into the text buffer
-        snprintf(text + strlen(text), sizeof(text) - strlen(text),
+        snprintf(results + strlen(results), sizeof(results) - strlen(results),
             "Pulse %d:\nRaw ADC Value: %d\nConverted Voltage: %.2f V\nPulse Width: %u us\n"
             "PWM Frequency: %.2f Hz\nDuty Cycle: %.2f%%\nAnalog Frequency: %.2f Hz\n\n",
             i + 1, adc_result, adc_result * conversion_factor, pulse_times[i],
             pwm_frequency, pwm_duty_cycle, analog_frequency);
     }
-
-    // Print the entire content of the text buffer
-    //printf("%s", text);
-
-    return text;
+    //printf(results);
+    return results;
 }
