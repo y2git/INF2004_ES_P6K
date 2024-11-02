@@ -3,8 +3,7 @@
 #include "buddy1.h"
 int main() {
     char buf[100]; //A buffer used for reading data from the SD card.
-    char filename[] = "test03.txt"; //filename to be created
-    char text[] = "blah blah blah"; //text to write to file
+    char filename[] = "test.txt"; //filename to be created
 
     // Initialize chosen serial port
     stdio_init_all();
@@ -35,8 +34,8 @@ int main() {
     }
     
     //main code
-    writefile(filename, text);
     readfile(filename);
+    writefile(filename, "asd");
 
     // Unmount drive
     f_unmount("0:");
