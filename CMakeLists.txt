@@ -18,6 +18,7 @@ include(pico_sdk_import.cmake)
 # Name projects
 project(project C CXX ASM)
 project(buddy2 C CXX ASM)
+project(buddy3 C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -25,6 +26,7 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(project project.c)
 add_executable(buddy2 buddy2.c)
+add_executable(buddy3 buddy3.c)
 add_executable(test test.c)
 
 
@@ -39,9 +41,10 @@ pico_set_program_name(project "project")
 pico_set_program_version(project "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(project 0)
 pico_enable_stdio_usb(project 1)
+pico_enable_stdio_uart(project 0)
 pico_enable_stdio_usb(buddy2 1)
+pico_enable_stdio_usb(buddy3 1)
 pico_enable_stdio_usb(test 1)
 
 # Add the standard library to the build
@@ -53,7 +56,8 @@ target_link_libraries(project
         hardware_timer 
         hardware_i2c 
         hardware_spi 
-        hardware_gpio 
+        hardware_gpio
+        hardware_uart 
         kissfft
         )
 target_link_libraries(buddy2
@@ -66,7 +70,19 @@ target_link_libraries(buddy2
         hardware_gpio 
         kissfft
         )
-        target_link_libraries(test
+target_link_libraries(buddy3
+        pico_stdlib
+        FatFs_SPI
+        hardware_adc 
+        hardware_pwm 
+        hardware_timer 
+        hardware_i2c 
+        hardware_spi 
+        hardware_gpio
+        hardware_uart 
+        kissfft
+        )
+target_link_libraries(test
         pico_stdlib 
         FatFs_SPI
         )
@@ -81,5 +97,6 @@ target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft)
 # create map/bin/hex file etc.
 pico_add_extra_outputs(project)
 pico_add_extra_outputs(buddy2)
+pico_add_extra_outputs(buddy3)
 pico_add_extra_outputs(test)
 

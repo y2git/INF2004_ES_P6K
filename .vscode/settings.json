@@ -24,6 +24,9 @@
   "cmake.generator": "Ninja",
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "files.associations": {
-    "kiss_fft.h": "c"
+    "*.embeddedhtml": "html",
+    "test,py": "python",
+    "kiss_fft.h": "c",
+    "stdlib.h": "c"
   }
 }
