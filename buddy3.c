@@ -36,10 +36,15 @@ void uart_rx_callback();
 
 int main() {
     stdio_init_all();
+    setvbuf(stdout, NULL, _IONBF, 0); // Disable buffering for immediate output
+
+    printf("Initializing pins...\n");
     initialize_pins();
+
+    printf("Initializing SD card...\n");
     initialize_sd_card();
 
-    // Detect baud rate on UART RX pin
+    printf("Detecting baud rate...\n");
     detected_baud_rate = detect_baud_rate();
     printf("Detected baud rate: %u\n", detected_baud_rate);
 
@@ -56,12 +61,12 @@ int main() {
     // Main loop
     while (1) {
         if (!gpio_get(BUTTON_PIN)) {
-            // Button pressed, play pulses
+            printf("Button pressed. Playing pulse sequence.\n");
             play_pulses();
-            sleep_ms(200); // Debounce delay
+            sleep_ms(100); // Debounce delay
         }
 
-        sleep_ms(500); // Idle delay
+        sleep_ms(100); // Idle delay
     }
 }
 
@@ -113,15 +118,23 @@ void play_pulses() {
 uint32_t detect_baud_rate() {
     absolute_time_t start, end;
     uint32_t duration_us;
+    absolute_time_t timeout = make_timeout_time_ms(1000); // 1-second timeout
 
     // Temporarily configure UART RX pin as GPIO input for baud rate detection
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(UART_RX_PIN, GPIO_IN);
 
-    // Wait for the line to go low (start bit)
+    printf("Waiting for start bit...\n");
+
+    // Wait for the line to go low (start bit) or timeout
     while (gpio_get(UART_RX_PIN) == 1) {
+        if (absolute_time_diff_us(get_absolute_time(), timeout) <= 0) {
+            printf("Baud rate detection timeout. No start bit detected.\n");
+            return 9600; // Return a default baud rate on timeout
+        }
         tight_loop_contents();
     }
+    printf("Start bit detected, measuring baud rate...\n");
 
     // Measure the duration of the low pulse (start bit duration)
     start = get_absolute_time();
@@ -129,15 +142,17 @@ uint32_t detect_baud_rate() {
         tight_loop_contents();
     }
     end = get_absolute_time();
+    printf("End of start bit detected.\n");
 
     duration_us = absolute_time_diff_us(start, end);
 
     // Calculate baud rate: Baud rate = (1 / duration in seconds) * bits per second
-    // For standard UART, 1 bit period = start bit duration
     uint32_t baud_rate = 1000000 / duration_us; // Convert microseconds to Hz
+    printf("Calculated baud rate: %u\n", baud_rate);
 
     return baud_rate;
 }
+
 
 // UART RX interrupt handler (e.g., for handling received data if needed)
 void uart_rx_callback() {
