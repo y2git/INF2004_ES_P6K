@@ -1,7 +1,4 @@
-<<<<<<< Updated upstream
-=======
 #include <stdlib.h>
->>>>>>> Stashed changes
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
@@ -83,12 +80,8 @@ void initialize_sd_card() {
     // Mount SD card and check if it's accessible
     if (f_mount(&fs, "", 1) != FR_OK) {
         printf("SD Card mount failed.\n");
-<<<<<<< Updated upstream
-    } else {
-=======
     }
     else {
->>>>>>> Stashed changes
         printf("SD Card mounted successfully.\n");
     }
 }
@@ -97,11 +90,7 @@ void initialize_sd_card() {
 void play_pulses() {
     FIL file;
     char line[32];
-<<<<<<< Updated upstream
-    UINT br;
-=======
     //UINT br;
->>>>>>> Stashed changes
 
     if (f_open(&file, PULSE_FILE_PATH, FA_READ) == FR_OK) {
         int pulse_count = 0;
@@ -114,12 +103,8 @@ void play_pulses() {
             pulse_count++;
         }
         f_close(&file);
-<<<<<<< Updated upstream
-    } else {
-=======
     }
     else {
->>>>>>> Stashed changes
         printf("Failed to open pulse file.\n");
     }
 }
@@ -162,7 +147,3 @@ void uart_rx_callback() {
         printf("Received: %c\n", ch);
     }
 }
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
