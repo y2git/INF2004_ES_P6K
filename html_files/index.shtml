@@ -43,21 +43,22 @@
         <!-- Pulse Width Measurement & ADC Section -->
         <div class="card">
             <h3>Pulse Width Measurement & ADC</h3>
-            <p>Pulse Width: <span id="pulse-width">0</span></p>
-            <p>ADC Value: <span id="adc-value">0</span></p>
+            <p>Pulse Width: <span id="pulse-width"><!--#pulsewidth--></span></p>
+            <p>ADC Value: <span id="adc-value"><!--#adcvalue--></span></p>
+            <p>Analog Frequency: <span id="analog-frequency"><!--#analogfreq--></span></p>
         </div>
 
         <!-- PWM Control Section -->
         <div class="card">
             <h3>PWM Control</h3>
-            <p>PWM Duty Cycle: <span id="pwm-duty-cycle">0</span></p>
-            <p>PWM Frequency: <span id="pwm-frequency">0</span></p>
+            <p>PWM Duty Cycle: <span id="pwm-duty-cycle"><!--#dutycycle--></span></p>
+            <p>PWM Frequency: <span id="pwm-frequency"><!--#pwmfrequency--></span></p>
         </div>
 
         <!-- microSD Card Read/Write Section -->
         <div class="card">
             <h3>microSD Card Read/Write</h3>
-            <p>Status: Waiting for data transfer...</p>
+            <p>Status: <!--#microsd--></p>
         </div>
 
         <!-- PicoProbe Debugging (SWD) Section -->
