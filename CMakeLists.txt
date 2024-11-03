@@ -47,7 +47,7 @@ add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
 
 # enable usb and uart
 pico_enable_stdio_usb(buddy3 1)
-pico_enable_stdio_uart(buddy3 2)
+#pico_enable_stdio_uart(buddy3 2)
 
 target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft/kissfft)
     

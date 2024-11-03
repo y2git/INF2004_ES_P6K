@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/alici/.pico-sdk/sdk/2.0.0/tools
+# Install script for directory: C:/Program Files/Raspberry Pi/Pico SDK v1.5.1/pico-sdk/tools
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

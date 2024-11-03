@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/alici/Documents/Pico-v1.5.1/pico-buddy3/lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI
+# Install script for directory: C:/Users/blade/Documents/Pico-v1.5.1/proj/INF2004_ES_P6K/lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
