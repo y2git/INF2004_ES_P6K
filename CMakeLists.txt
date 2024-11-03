@@ -42,7 +42,7 @@ pico_set_program_version(project "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_usb(project 1)
-pico_enable_stdio_uart(project 0)
+pico_enable_stdio_uart(project 1)
 pico_enable_stdio_usb(buddy2 1)
 pico_enable_stdio_usb(buddy3 1)
 pico_enable_stdio_usb(test 1)

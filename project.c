@@ -4,6 +4,7 @@
 #include "ff.h"
 #include "buddy1.h"
 #include "buddy2.h"
+#include "buddy3.h"
 
 int main() {
     char buf[100]; //A buffer used for reading data from the SD card.
@@ -36,10 +37,11 @@ int main() {
     if (fr != FR_OK) {
         printf("ERROR: Could not mount filesystem (%d)\r\n", fr);
     }
-
+    
     //main code
     //writefile(filename, text);
     //readfile(filename);
+    //buddy3();
 
     //Buddy 2 main code -------------------------
     // Setup ADC on GP26
@@ -91,6 +93,7 @@ int main() {
 
     writefile(filename, text);
     readfile(filename);
+    
 
 
     // Unmount drive

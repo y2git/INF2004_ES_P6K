@@ -10,7 +10,7 @@
 
 // Pin definitions
 #define PULSE_OUTPUT_PIN 3
-#define BUTTON_PIN 20
+#define BUTTON_PIN 22
 #define UART_PORT uart0
 #define UART_RX_PIN 1
 
