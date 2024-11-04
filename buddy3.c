@@ -5,35 +5,28 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/timer.h"
-#include "ff.h"  // FatFS library for file handling
 
 // Pin definitions
-#define PULSE_OUTPUT_PIN 3
-#define BUTTON_PIN 22
-#define SD_CARD_SPI_PORT spi0
-#define SD_CARD_MISO_PIN 16
-#define SD_CARD_MOSI_PIN 19
-#define SD_CARD_SCK_PIN 18
-#define SD_CARD_CS_PIN 17
+#define UART_RX_PIN 4       // GP4 as UART RX
+#define UART_TX_PIN 5       // GP5 as UART TX
 #define UART_PORT uart0
-#define UART_RX_PIN 1
+#define BUTTON_PIN 20       // GP20 as the button for changing baud rates
 
-// File path on the SD card
-#define PULSE_FILE_PATH "pulses.txt"
+// Standard baud rates to cycle through
+const uint32_t STANDARD_BAUD_RATES[] = {4800, 9600, 19200, 38400, 57600, 115200};
+const int NUM_BAUD_RATES = sizeof(STANDARD_BAUD_RATES) / sizeof(STANDARD_BAUD_RATES[0]);
 
-// UART baud rate variables
-uint32_t detected_baud_rate = 0;
-
-// FATFS object for SD card
-FATFS fs;
+// Global variables
+volatile uint32_t current_baud_rate_index = 0; // To track the current baud rate index
 
 // Function prototypes
+void initialize_uart(uint32_t baud_rate);
 void initialize_pins();
-void initialize_sd_card();
-void play_pulses();
-uint32_t detect_baud_rate();
+void handle_button_press();
 void uart_rx_callback();
+void detect_baud_rate_and_error();
 
+// Main function
 int main() {
     stdio_init_all();
     setvbuf(stdout, NULL, _IONBF, 0); // Disable buffering for immediate output
@@ -41,30 +34,17 @@ int main() {
     printf("Initializing pins...\n");
     initialize_pins();
 
-    printf("Initializing SD card...\n");
-    initialize_sd_card();
+    // Start with the first baud rate in the list
+    initialize_uart(STANDARD_BAUD_RATES[current_baud_rate_index]);
 
-    printf("Detecting baud rate...\n");
-    detected_baud_rate = detect_baud_rate();
-    printf("Detected baud rate: %u\n", detected_baud_rate);
+    printf("Press button on GP20 to change the UART baud rate...\n");
 
-    // Initialize UART with the detected baud rate
-    uart_init(UART_PORT, detected_baud_rate);
-    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
-
-    // Set up UART RX interrupt for handling incoming data
-    irq_set_exclusive_handler(UART0_IRQ, uart_rx_callback);
-    uart_set_irq_enables(UART_PORT, true, false);
-
-    printf("System Initialized.\n");
-
-    // Main loop
     while (1) {
-        if (!gpio_get(BUTTON_PIN)) {
-            printf("Button pressed. Playing pulse sequence.\n");
-            play_pulses();
-            sleep_ms(100); // Debounce delay
-        }
+        // Check for button press to change the baud rate
+        handle_button_press();
+
+        // Perform baud rate detection in the main loop
+        detect_baud_rate_and_error();
 
         sleep_ms(100); // Idle delay
     }
@@ -72,93 +52,126 @@ int main() {
 
 // Initialize GPIOs and UART
 void initialize_pins() {
-    gpio_init(PULSE_OUTPUT_PIN);
-    gpio_set_dir(PULSE_OUTPUT_PIN, GPIO_OUT);
-
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_up(BUTTON_PIN);
 }
 
-// Initialize the SD card
-void initialize_sd_card() {
-    // Mount SD card and check if it's accessible
-    if (f_mount(&fs, "", 1) != FR_OK) {
-        printf("SD Card mount failed.\n");
-    }
-    else {
-        printf("SD Card mounted successfully.\n");
+// Initialize UART on the specified baud rate and set up RX interrupt
+void initialize_uart(uint32_t baud_rate) {
+    uart_init(UART_PORT, baud_rate);
+    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
+    uart_set_hw_flow(UART_PORT, false, false);
+    uart_set_format(UART_PORT, 8, 1, UART_PARITY_NONE);
+    uart_set_fifo_enabled(UART_PORT, true);
+    printf("UART initialized with baud rate: %u\n", baud_rate);
+
+    // Set up UART RX interrupt
+    //irq_set_exclusive_handler(UART0_IRQ, uart_rx_callback);
+    //irq_set_enabled(UART0_IRQ, true);
+    //uart_set_irq_enables(UART_PORT, true, false); // Enable RX interrupt, disable TX interrupt
+}
+
+// Handle button press to cycle through baud rates
+void handle_button_press() {
+    static bool button_pressed = false;
+
+    if (!gpio_get(BUTTON_PIN) && !button_pressed) {  // Button press detected
+        button_pressed = true;  // Set the flag to prevent multiple detections
+
+        // Increment baud rate index
+        current_baud_rate_index = (current_baud_rate_index + 1) % NUM_BAUD_RATES;
+
+        // Get the new baud rate from the list
+        uint32_t new_baud_rate = STANDARD_BAUD_RATES[current_baud_rate_index];
+
+        // Reinitialize UART with the new baud rate
+        initialize_uart(new_baud_rate);
+
+        printf("Baud rate changed to: %u\n", new_baud_rate);
+
+        sleep_ms(500); // Debounce delay
+    } else if (gpio_get(BUTTON_PIN)) {
+        // Reset the button_pressed flag when the button is released
+        button_pressed = false;
     }
 }
 
-// Read pulses from the file and output them on PULSE_OUTPUT_PIN
-void play_pulses() {
-    FIL file;
-    char line[32];
-    //UINT br;
+// UART RX interrupt callback function
+//void uart_rx_callback() {
+    // Check if there is data available in the RX FIFO
+    //while (uart_is_readable(UART_PORT)) {
+        // Read a character from the UART
+        //char received_char = uart_getc(UART_PORT);
 
-    if (f_open(&file, PULSE_FILE_PATH, FA_READ) == FR_OK) {
-        int pulse_count = 0;
-        while (pulse_count < 10 && f_gets(line, sizeof(line), &file)) {
-            int pulse_length = atoi(line);
-            gpio_put(PULSE_OUTPUT_PIN, 1);
-            sleep_us(pulse_length);
-            gpio_put(PULSE_OUTPUT_PIN, 0);
-            sleep_us(pulse_length);
-            pulse_count++;
-        }
-        f_close(&file);
-    }
-    else {
-        printf("Failed to open pulse file.\n");
-    }
-}
+        // Display the received character
+        //printf("Received: %c\n", received_char);
 
-// Custom baud rate detection function
-uint32_t detect_baud_rate() {
+        // Check for any framing or parity errors
+        //uint32_t errors = uart_get_hw(UART_PORT)->rsr;
+        //if (errors & UART_UARTDR_FE_BITS) {
+            //printf("Framing error detected!\n");
+            //uart_get_hw(UART_PORT)->rsr = UART_UARTDR_FE_BITS; // Clear framing error flag
+        //}
+        //if (errors & UART_UARTDR_PE_BITS) {
+            //printf("Parity error detected!\n");
+            //uart_get_hw(UART_PORT)->rsr = UART_UARTDR_PE_BITS; // Clear parity error flag
+        //}
+    //}
+//}
+
+// Detect the UART baud rate and display the error margin and measurement time
+void detect_baud_rate_and_error() {
     absolute_time_t start, end;
     uint32_t duration_us;
-    absolute_time_t timeout = make_timeout_time_ms(1000); // 1-second timeout
+    float closest_error = 100.0;
+    uint32_t detected_baud_rate = 9600;  // Default to 9600 if no closer match found
 
-    // Temporarily configure UART RX pin as GPIO input for baud rate detection
-    gpio_set_function(UART_RX_PIN, GPIO_FUNC_SIO);
-    gpio_set_dir(UART_RX_PIN, GPIO_IN);
+    // Send ASCII characters continuously for timing measurements
+    static int ascii_char = 32; // Start with space character (ASCII 32)
 
-    printf("Waiting for start bit...\n");
+    // If we have reached the end of printable ASCII, loop back
+    if (ascii_char > 126) ascii_char = 32;
 
-    // Wait for the line to go low (start bit) or timeout
-    while (gpio_get(UART_RX_PIN) == 1) {
-        if (absolute_time_diff_us(get_absolute_time(), timeout) <= 0) {
-            printf("Baud rate detection timeout. No start bit detected.\n");
-            return 9600; // Return a default baud rate on timeout
-        }
-        tight_loop_contents();
-    }
-    printf("Start bit detected, measuring baud rate...\n");
+    uart_putc(UART_PORT, ascii_char++); // Send next ASCII character
 
-    // Measure the duration of the low pulse (start bit duration)
+    // Wait for a start of a byte and measure the time taken for an entire byte
+    if (!uart_is_readable(UART_PORT)) return;  // Avoid blocking if no data
+
+    // Capture the time for the beginning of the byte
     start = get_absolute_time();
-    while (gpio_get(UART_RX_PIN) == 0) {
-        tight_loop_contents();
-    }
-    end = get_absolute_time();
-    printf("End of start bit detected.\n");
 
+    // Read one byte to mark the end of timing
+    char byte_received = uart_getc(UART_PORT);
+
+    // Capture the time after receiving the byte
+    end = get_absolute_time();
+
+    // Calculate duration in microseconds for one byte
     duration_us = absolute_time_diff_us(start, end);
 
-    // Calculate baud rate: Baud rate = (1 / duration in seconds) * bits per second
-    uint32_t baud_rate = 1000000 / duration_us; // Convert microseconds to Hz
-    printf("Calculated baud rate: %u\n", baud_rate);
+    // Display the measured time
+    printf("Time measured for byte: %u us\n", duration_us);
 
-    return baud_rate;
-}
+    // One byte (assuming 8N1) has 10 bits (start + 8 data + stop)
+    float bit_duration_us = duration_us / 10.0;
 
+    // Compare measured bit duration to standard baud rates
+    for (int i = 0; i < NUM_BAUD_RATES; i++) {
+        uint32_t baud = STANDARD_BAUD_RATES[i];
+        float expected_bit_duration = 1000000.0 / baud;
 
-// UART RX interrupt handler (e.g., for handling received data if needed)
-void uart_rx_callback() {
-    while (uart_is_readable(UART_PORT)) {
-        char ch = uart_getc(UART_PORT);
-        // Handle received character if needed
-        printf("Received: %c\n", ch);
+        // Calculate error margin as a percentage
+        float current_error_margin = ((float)abs((int)(bit_duration_us - expected_bit_duration)) / expected_bit_duration) * 100.0;
+
+        // Find the closest matching baud rate
+        if (current_error_margin < closest_error) {
+            closest_error = current_error_margin;
+            detected_baud_rate = baud;
+        }
     }
+
+    // Display detected baud rate and error margin
+    printf("Detected baud rate: %u with error margin: %.2f%%\n", detected_baud_rate, closest_error);
 }
