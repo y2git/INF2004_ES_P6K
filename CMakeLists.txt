@@ -51,7 +51,17 @@ pico_enable_stdio_uart(buddy3 0)
 
 target_include_directories(kissfft PUBLIC ${CMAKE_SOURCE_DIR}/lib/kissfft/kissfft)
     
-target_link_libraries(buddy3 pico_stdlib hardware_adc hardware_pwm hardware_timer hardware_i2c hardware_spi hardware_gpio hardware_uart kissfft FatFs_SPI)
+target_link_libraries(buddy3 
+        pico_stdlib 
+        hardware_adc 
+        hardware_pwm 
+        hardware_timer 
+        hardware_i2c 
+        hardware_spi 
+        hardware_gpio 
+        hardware_uart 
+        kissfft 
+        FatFs_SPI)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(buddy3)
