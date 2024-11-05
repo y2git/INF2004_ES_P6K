@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "sd_card.h"
 #include "ff.h"
@@ -91,13 +92,15 @@ void generate_pulses_from_file(char filename[]) {
 
     // Read each line and interpret as a pulse duration in microseconds
     while (f_gets(buf, sizeof(buf), &fil)) {
-        pulse_duration = (uint32_t)atoi(buf); // Convert string to integer (microseconds)
-
-        // Generate pulse on PULSE_OUTPUT_PIN
-        gpio_put(PULSE_OUTPUT_PIN, 1);    // Start pulse
-        sleep_us(pulse_duration);         // Hold for pulse duration
-        gpio_put(PULSE_OUTPUT_PIN, 0);    // End pulse
-        sleep_us(100);                    // Small delay between pulses (100 µs)
+        if (strstr(buf, "Pulse Width:") != NULL) {
+            pulse_duration = (uint32_t)atoi(buf); // Convert string to integer (microseconds)
+    
+            // Generate pulse on PULSE_OUTPUT_PIN
+            gpio_put(PULSE_OUTPUT_PIN, 1);    // Start pulse
+            sleep_us(pulse_duration);         // Hold for pulse duration
+            gpio_put(PULSE_OUTPUT_PIN, 0);    // End pulse
+            sleep_us(100);                    // Small delay between pulses (100 µs)
+        }
     }
 
     // Close the file after pulse generation is complete
@@ -105,18 +108,21 @@ void generate_pulses_from_file(char filename[]) {
     if (fr != FR_OK) {
         printf("ERROR: Could not close file (%d)\r\n", fr);
     }
+    printf("success\n");
 }
 
 // Interrupt handler for button press
 void button_press_callback(uint gpio, uint32_t events) {
-    if (gpio == BUTTON_PIN) {
-        generate_pulses_from_file("pulses.txt");  // Replace "pulses.txt" with the actual filename if different
-    }
+    printf("%d\n",gpio);
+    
+    generate_pulses_from_file("test.txt");  // Replace "pulses.txt" with the actual filename if different
+    
 }
 
 // Setup function to initialize GPIO and attach interrupt handler
 void setup() {
     init_pulse_output();
     init_button();
+    printf("i\n");
     gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &button_press_callback);
 }

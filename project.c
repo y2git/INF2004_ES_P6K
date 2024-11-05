@@ -95,7 +95,6 @@ int main() {
     readfile(filename);
     
     setup();
-    generate_pulses_from_file(filename);
 
 
     // Unmount drive
