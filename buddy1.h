@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "sd_card.h"
