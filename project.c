@@ -1,10 +1,10 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "sd_card.h"
 #include "ff.h"
 #include "buddy1.h"
 #include "buddy2.h"
-#include "buddy3.h"
 
 int main() {
     char buf[100]; //A buffer used for reading data from the SD card.
@@ -94,6 +94,8 @@ int main() {
     writefile(filename, text);
     readfile(filename);
     
+    setup();
+    generate_pulses_from_file(filename);
 
 
     // Unmount drive

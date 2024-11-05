@@ -1,60 +1,131 @@
-#ifndef BUDDY3_H
-#define BUDDY3_H
-
+#include <stdlib.h>
+#include <stdio.h>
 #include "pico/stdlib.h"
-#include "buddy1.h"  // Include buddy1 to access SD card functions for reading pulses
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
+#include "hardware/irq.h"
+#include "hardware/timer.h"
+#include "ff.h"
+#include "sd_card.h"
 
+// Pin definitions
 #define PULSE_OUTPUT_PIN 3
 #define BUTTON_PIN 22
+#define UART_PORT uart0
+#define UART_RX_PIN 1
 
-// Function to initialize pulse output on PULSE_OUTPUT_PIN
-static inline void init_pulse_output() {
+// File path on the SD card
+#define PULSE_FILE_PATH "test.txt"
+
+// UART baud rate variables
+uint32_t detected_baud_rate = 0;
+
+// Initialise Variables
+FRESULT fr; //Holds the result of FatFS function calls, such as mounting or opening files.
+FATFS fs; //filesystem object for the SD card.
+FIL fil; //file object used for reading/writing files.
+int ret; //Stores return values
+char buf[100]; //A buffer used for reading data from the SD card.
+
+
+// Initialize GPIOs and UART
+void initialize_pins() {
     gpio_init(PULSE_OUTPUT_PIN);
     gpio_set_dir(PULSE_OUTPUT_PIN, GPIO_OUT);
-}
 
-// Function to initialize button input on BUTTON_PIN with a pull-up resistor
-static inline void init_button() {
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_up(BUTTON_PIN);
 }
 
-// Function to generate pulses based on data read from SD card
-static inline void generate_pulses_from_sd() {
-    uint32_t pulse_duration;
+// Read pulses from the file and output them on PULSE_OUTPUT_PIN
+void play_pulses() {
+    char line[32];
+    //UINT br;
 
-    // Initialize the SD card
-    if (sd_card_init() != 0) {
-        // Handle initialization error (e.g., log or return)
-        return;
+    if (f_open(&fil, PULSE_FILE_PATH, FA_READ) == FR_OK) {
+        int pulse_count = 0;
+        while (pulse_count < 10 && f_gets(line, sizeof(line), &fil)) {
+            int pulse_length = atoi(line);
+            gpio_put(PULSE_OUTPUT_PIN, 1);
+            sleep_us(pulse_length);
+            gpio_put(PULSE_OUTPUT_PIN, 0);
+            sleep_us(pulse_length);
+            pulse_count++;
+        }
+        f_close(&fil);
     }
-
-    // Loop to read pulse data from SD card and output on PULSE_OUTPUT_PIN
-    while (buddy1_read_pulse(&pulse_duration)) {  // Replace buddy1_read_pulse with actual function
-        gpio_put(PULSE_OUTPUT_PIN, 1); // Start pulse
-        sleep_us(pulse_duration);      // Duration of pulse
-        gpio_put(PULSE_OUTPUT_PIN, 0); // End pulse
-        sleep_us(pulse_duration);      // Interval between pulses
+    else {
+        printf("Failed to open pulse file.\n");
     }
-
-    // Close the SD card after pulse generation is complete
-    sd_card_close();
 }
 
-// Interrupt handler for button press
-static inline bool button_press_callback(uint gpio, uint32_t events) {
-    if (gpio == BUTTON_PIN) {
-        generate_pulses_from_sd();
+// Custom baud rate detection function
+uint32_t detect_baud_rate() {
+    absolute_time_t start, end;
+    uint32_t duration_us;
+
+    // Temporarily configure UART RX pin as GPIO input for baud rate detection
+    gpio_set_function(UART_RX_PIN, GPIO_FUNC_SIO);
+    gpio_set_dir(UART_RX_PIN, GPIO_IN);
+
+    // Wait for the line to go low (start bit)
+    while (gpio_get(UART_RX_PIN) == 1) {
+        tight_loop_contents();
     }
-    return true;
+
+    // Measure the duration of the low pulse (start bit duration)
+    start = get_absolute_time();
+    while (gpio_get(UART_RX_PIN) == 0) {
+        tight_loop_contents();
+    }
+    end = get_absolute_time();
+
+    duration_us = absolute_time_diff_us(start, end);
+
+    // Calculate baud rate: Baud rate = (1 / duration in seconds) * bits per second
+    // For standard UART, 1 bit period = start bit duration
+    uint32_t baud_rate = 1000000 / duration_us; // Convert microseconds to Hz
+
+    return baud_rate;
 }
 
-// Setup function to initialize GPIO and attach interrupt handler
-static inline void setup() {
-    init_pulse_output();
-    init_button();
-    gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &button_press_callback);
+// UART RX interrupt handler (e.g., for handling received data if needed)
+void uart_rx_callback() {
+    while (uart_is_readable(UART_PORT)) {
+        char ch = uart_getc(UART_PORT);
+        // Handle received character if needed
+        printf("Received: %c\n", ch);
+    }
 }
 
-#endif // BUDDY3_H
+
+int buddy3() {
+    initialize_pins();
+    printf("start");
+    // Detect baud rate on UART RX pin
+    detected_baud_rate = detect_baud_rate();
+    printf("Detected baud rate: %u\n", detected_baud_rate);
+
+    // Initialize UART with the detected baud rate
+    uart_init(UART_PORT, detected_baud_rate);
+    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
+
+    // Set up UART RX interrupt for handling incoming data
+    irq_set_exclusive_handler(UART0_IRQ, uart_rx_callback);
+    uart_set_irq_enables(UART_PORT, true, false);
+
+    printf("System Initialized.\n");
+
+    // Main loop
+    while (1) {
+        if (!gpio_get(BUTTON_PIN)) {
+            // Button pressed, play pulses
+            play_pulses();
+            sleep_ms(200); // Debounce delay
+        }
+
+        sleep_ms(500); // Idle delay
+    }
+}
+
