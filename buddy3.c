@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
@@ -23,23 +24,19 @@ volatile bool edge_detected = false;
 void gpio_callback(uint gpio, uint32_t events) {
     if (gpio == UART_RX_PIN) {
         if (events & GPIO_IRQ_EDGE_FALL) {
-            // Falling edge detected (start bit)
             start_time = time_us_32();
             edge_detected = true;
         } else if (events & GPIO_IRQ_EDGE_RISE && edge_detected) {
-            // Rising edge detected (end of bit)
             end_time = time_us_32();
-            uint32_t bit_time = end_time - start_time;  // Measured bit time in microseconds
+            uint32_t bit_time = end_time - start_time;
             edge_detected = false;
 
-            // Store the bit time in the circular buffer
             bit_times[buffer_index] = bit_time;
             buffer_index = (buffer_index + 1) % BUFFER_SIZE;
             if (sample_count < BUFFER_SIZE) {
                 sample_count++;
             }
 
-            // Print the measured bit time
             printf("Measured Bit Time: %u us\n", bit_time);
         }
     }
@@ -54,42 +51,63 @@ float calculate_average_bit_time() {
     return (sample_count > 0) ? (float)sum / sample_count : 0;
 }
 
-// Calculate the expected bit time based on the reference baud rate
 float calculate_expected_bit_time() {
-    return 1000000.0 / EXPECTED_BAUD_RATE;  // Convert baud rate to bit time in microseconds
+    return 1000000.0 / EXPECTED_BAUD_RATE;
 }
 
-// Calculate the percentage error between measured and expected bit times
-float calculate_percentage_error(float measured_bit_time, float expected_bit_time) {
-    return (expected_bit_time > 0) ? (fabs(measured_bit_time - expected_bit_time) / expected_bit_time) * 100 : 0;
+void identify_protocol() {
+    float average_bit_time = calculate_average_bit_time();
+    float expected_uart_bit_time = calculate_expected_bit_time();
+    float expected_i2c_bit_time = 1000000.0 / 100000;
+    float expected_spi_bit_time = 1000000.0 / 500000;
+
+    printf("Performing protocol identification...\n");
+    if (fabs(average_bit_time - expected_uart_bit_time) < 5) {
+        printf("Identified protocol: UART\n");
+    } else if (fabs(average_bit_time - expected_i2c_bit_time) < 5) {
+        printf("Identified protocol: I2C\n");
+    } else if (fabs(average_bit_time - expected_spi_bit_time) < 5) {
+        printf("Identified protocol: SPI\n");
+    } else {
+        printf("Protocol not identified\n");
+    }
+}
+
+void handle_web_commands(const char *command) {
+    if (strcmp(command, "IDENTIFY_PROTOCOL") == 0) {
+        identify_protocol();
+    } else if (strcmp(command, "PRINT_STATUS") == 0) {
+        printf("Command received: PRINT_STATUS\n");
+        printf("Current Sample Count: %d\n", sample_count);
+    } else {
+        printf("Unknown command: %s\n", command);
+    }
 }
 
 int main() {
     stdio_init_all();
+    printf("Initialization complete\n");
 
-    // Enable UART and set initial configurations
-    uart_init(UART_ID, 115200);  // Set an initial arbitrary baud rate
+    uart_init(UART_ID, 115200);
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
-
-    // Set up GPIO interrupts for detecting falling and rising edges on RX pin
     gpio_set_irq_enabled_with_callback(UART_RX_PIN, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 
     char charData;
+    char testCommand[20];
+    int commandIndex = 0;
 
     while (true) {
         // Check if enough samples are collected to calculate the average
         if (sample_count == BUFFER_SIZE) {
             float average_bit_time = calculate_average_bit_time();
-            float baud_rate = 1000000.0 / average_bit_time;  // Convert microseconds to baud rate
+            float baud_rate = 1000000.0 / average_bit_time;
             float expected_bit_time = calculate_expected_bit_time();
-            float percentage_error = calculate_percentage_error(average_bit_time, expected_bit_time);
+            float percentage_error = (expected_bit_time > 0) ? (fabs(average_bit_time - expected_bit_time) / expected_bit_time) * 100 : 0;
 
-            // Print the results
             printf("Average Bit Time: %.2f us, Estimated Baud Rate: %.2f\n", average_bit_time, baud_rate);
             printf("Expected Bit Time: %.2f us, Percentage Error: %.2f%%\n", expected_bit_time, percentage_error);
-
-            // Reset sample count for the next capture cycle
+            identify_protocol();
             sample_count = 0;
         }
 
@@ -97,27 +115,33 @@ int main() {
         static char currentLetter = 'A';
         uart_putc(UART_ID, currentLetter);
         printf("Sent: %c\n", currentLetter);
-
-        // Increment the letter, loop back to 'A' after 'Z'
         currentLetter = (currentLetter == 'Z') ? 'A' : currentLetter + 1;
 
         // Check if data is available on the UART receiver
         if (uart_is_readable(UART_ID)) {
             charData = uart_getc(UART_ID);
-
             if (charData >= 'A' && charData <= 'Z') {
-                // Convert uppercase to lowercase and print
-                charData += 32;  // Convert to lowercase
+                charData += 32;
                 printf("Received and converted: %c\n", charData);
             } else if (charData == '1') {
-                // If '1' is received, print '2' instead
                 printf("Received: 1, Printing: 2\n");
             } else {
                 printf("Received: %c\n", charData);
             }
         }
 
-        // Delay of 1 second between transmissions
+        // Non-blocking command reading from serial input
+        int c = getchar_timeout_us(0);  // Timeout of 0 for non-blocking
+        if (c != PICO_ERROR_TIMEOUT) {
+            if (c == '\n' || c == '\r') {
+                testCommand[commandIndex] = '\0';  // Null-terminate the string
+                handle_web_commands(testCommand);
+                commandIndex = 0;  // Reset for the next command
+            } else if (commandIndex < sizeof(testCommand) - 1) {
+                testCommand[commandIndex++] = (char)c;
+            }
+        }
+
         sleep_ms(1000);
     }
 
