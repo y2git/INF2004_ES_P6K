@@ -30,7 +30,8 @@ FRESULT fr;           // Holds the result of FatFS function calls, such as mount
 FATFS fs;             // Filesystem object for the SD card.
 FIL fil;              // File object used for reading/writing files.
 int ret;              // Stores return values
-char buf[100];        // Buffer used for reading data from the SD card.
+time_t now;
+char buf[300];        // Buffer used for reading data from the SD card.
 
 // GPIO Definitions
 #define ADC_PIN 26  // GP26 for ADC input
@@ -170,6 +171,7 @@ void init_sdcard(){
     if (fr != FR_OK) {
         printf("ERROR: Could not mount filesystem (%d)\r\n", fr);
     }
+    printf("done sdcard check.\n");
 }
 
 // Function to read a file and print its content over serial
@@ -198,23 +200,30 @@ void readfile(char filename[]) {
 }
 
 // Function to write text to a file on the SD card
-void writefile(char filename[], char text[]) {
-    // Open file for writing (overwrites existing content)
-    fr = f_open(&fil, filename, FA_WRITE | FA_CREATE_ALWAYS);
+void writefile(char filename[], const char *formatted_time, uint16_t adc_result, float analog_frequency, 
+               float rms_value, float peak_to_peak, float snr_value) {
+    // FA_CREATE_ALWAYS = Open file for writing (overwrites existing content)
+    // FA_OPEN_APPEND = append
+    fr = f_open(&fil, filename, FA_WRITE | FA_OPEN_APPEND);
     if (fr != FR_OK) {
         printf("ERROR: Could not open file (%d)\r\n", fr);
         while (true);
     }
 
-    // Write text to file
+    // Check if file is empty and write the header row
+    if (f_size(&fil) == 0) {
+        f_printf(&fil, "Time,ADC Value,Analog Frequency,RMS,Peak-to-Peak,SNR (dB)\n");
+    }
+
+    // Write the data in CSV format
     printf("Writing to file '%s':\r\n", filename);
-    ret = f_printf(&fil, "%s\r\n", text);
+    ret = f_printf(&fil, "%s,%d,%.2f,%.2f,%.2f,%.2f\n", formatted_time, adc_result, analog_frequency,
+                   rms_value, peak_to_peak, snr_value);
     if (ret < 0) {
         printf("ERROR: Could not write to file (%d)\r\n", ret);
         f_close(&fil);
         while (true);
     }
-    
     // Close file
     fr = f_close(&fil);
     if (fr != FR_OK) {
@@ -322,7 +331,7 @@ void fft_analysis() {
         }
     }
     float dominant_frequency = (float)max_index * (1000.0 / FFT_SIZE);  // Sampling rate is 1 kHz
-    printf("Dominant Frequency: %.2f Hz\n", dominant_frequency);
+    //printf("Dominant Frequency: %.2f Hz\n", dominant_frequency);
 }
 // buddy2 stuff ==================================
 
@@ -335,19 +344,41 @@ void main()
     init_ssi_cgi_handlers(); // Configure SSI and CGI handlers
     print_network_info();    // Print network interface information
 
-    initialize_ntp_client();
+    //initialize_ntp_client();
+
+    printf("\r\nSD card test. Press 'enter' to start.\r\n");
+    while (true) {
+        printf("Received: %c (%d)\r\n", buf[0], buf[0]);
+        buf[0] = getchar();
+        if ((buf[0] == '\r') || (buf[0] == '\n')) {
+            break;
+        }
+    }
 
     init_sdcard();
+    char filename[] = "ADC.csv";
 
     // Timer for ADC sampling every 1 ms (1 kHz sampling rate)
     repeating_timer_t adc_timer;
     add_repeating_timer_ms(ADC_SAMPLE_RATE_MS, sample_adc_callback, NULL, &adc_timer);
-
+    
     while (1)
     {
-        printf("ADC Value: %d, Analog Frequency: %.2f Hz, RMS: %.2f, Peak-to-Peak: %.2f, SNR: %.2f dB\n",
-            adc_result, analog_frequency, rms_value, peak_to_peak, snr_value);
-        sleep_ms(200);  // Print results every 200 ms
+        char formatted_string[300]; // Ensure the buffer size is large enough
+
+        char formatted_time[20];
+        now = time(NULL);
+        now += 8 * 3600;            // Add 8 hours to convert to UTC+8 (Singapore time)
+        struct tm *timeinfo = localtime(&now);
+        strftime(formatted_time, sizeof(formatted_time), "%d/%m/%Y %H:%M:%S", timeinfo);
+
+        snprintf(formatted_string, sizeof(formatted_string),
+            "Time: %s, ADC Value: %d, Analog Frequency: %.2f Hz, RMS: %.2f, Peak-to-Peak: %.2f, SNR: %.2f dB",
+            formatted_time, adc_result, analog_frequency, rms_value, peak_to_peak, snr_value);
+        printf("%s\n",formatted_string);
+        writefile(filename, formatted_time, adc_result, analog_frequency, rms_value, peak_to_peak, snr_value);
+        sleep_ms(1000);  // Print results every x ms
         tight_loop_contents();
     }
+    printf("end\n");
 }
