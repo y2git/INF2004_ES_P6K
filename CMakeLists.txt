@@ -6,6 +6,9 @@ set(PICO_BOARD pico_w)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+set(PICO_STACK_SIZE 8192)  # Set a larger stack size (default is 2048 bytes)
+
+
 include(pico_sdk_import.cmake)
 
 project(pico_w_webserver)
@@ -25,10 +28,6 @@ add_executable(${PROGRAM_NAME}
 
 target_include_directories(${PROGRAM_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
-    pico_cyw43_arch_lwip_threadsafe_background
-    pico_stdlib
-    pico_lwip_iperf
-    hardware_adc
 )
 
 # Ensure WiFi credentials are set
@@ -48,8 +47,10 @@ target_compile_definitions(${PROGRAM_NAME} PRIVATE
 target_link_libraries(${PROGRAM_NAME}
     pico_cyw43_arch_lwip_threadsafe_background
     pico_lwip_http
+    pico_lwip_sntp           
     pico_stdlib
     hardware_adc
+    hardware_pwm
 )
 
 pico_enable_stdio_usb(${PROGRAM_NAME} 1)

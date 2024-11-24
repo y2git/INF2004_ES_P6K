@@ -96,5 +96,17 @@
 #define LWIP_HTTPD_SSI_INCLUDE_TAG 0
 #define HTTPD_FSDATA_FILE "htmldata.c"
 
+// SNTP
+#define LWIP_SNTP               1
+#define SNTP_SERVER_DNS         1
+#define SNTP_STARTUP_DELAY      1000
+#define SNTP_RECV_TIMEOUT       15000
+#define SNTP_SET_SYSTEM_TIME_US(sec, us) set_time(sec, us)
+#define SNTP_UPDATE_DELAY       (60*1000)
+#define SNTP_DEBUG LWIP_DBG_ON
+#define SNTP_MAX_SERVERS        1
+#define SNTP_TIME_SYNC_LWIP_SYS 1
+
+
 
 #endif /* __LWIPOPTS_H__ */

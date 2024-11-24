@@ -2,16 +2,12 @@
 #include "pico/cyw43_arch.h"
 #include "hardware/adc.h"
 
-#include "swd_debugger.h"
-
 // SSI tags
-const char *ssi_tags[] = {"volt", "temp", "led", "idcode", "data", "pulsewidth", "adcvalue", "analogfreq",
-                          "dutycycle", "pwmfrequency", "microsd"};
+const char *ssi_tags[] = {"volt", "temp", "led", "idcode", "data", "timeinfo"};
 
 // Global variable to store the received ID code
 char received_idcode[100];
 char received_data[100];
-uint32_t idcode_hex;
 
 u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen)
 {
@@ -42,24 +38,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen)
 
     case 3: // device-id
     {
-        {
-            // Get idcode in hex
-            idcode_hex = device_idcode;
-
-            // Convert to string
-            snprintf(received_idcode, sizeof(received_idcode), "0x%08X", idcode_hex);
-
-            // Check if buffer is almost full, shift content if needed
-            if (strlen(received_idcode) >= sizeof(received_idcode) - 1)
-            {
-                // Shift left to make room
-                memmove(received_idcode, received_idcode + 10, sizeof(received_idcode) - 10);
-                received_idcode[sizeof(received_idcode) - 1] = '\0';
-            }
-
-            // received_idcode[sizeof(received_idcode) - 1] = '\0'; // Ensure null-termination
-            printed = snprintf(pcInsert, iInsertLen, "%s", received_idcode);
-        }
+        printed = snprintf(pcInsert, iInsertLen, "%s", received_idcode);
     }
     break;
 
@@ -69,45 +48,22 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen)
     }
     break;
 
-    case 5: // pulsewidth
+    case 5: // ntptime
     {
-        // int pulse_width = get_pulse_width(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%d µs", pulse_width);
-    }
-    break;
+        time_t now = time(NULL);           // Get the current time in UTC
+        now += 8 * 3600;                   // Add 8 hours to convert to UTC+8 (Singapore time)
+        struct tm *tm_info = gmtime(&now); // Use gmtime to convert to a struct tm
 
-    case 6: // adcvalue
-    {
-        // int adc_value = get_adc_value(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%d", adc_value);
-    }
-    break;
-
-    case 7: // analogfreq
-    {
-        // float analog_freq = get_analog_frequency(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%.2f Hz", analog_freq);
-    }
-    break;
-
-    case 8: // dutycycle
-    {
-        // int duty_cycle = get_pwm_duty_cycle(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%d%%", duty_cycle);
-    }
-    break;
-
-    case 9: // pwmfrequency
-    {
-        // int pwm_freq = get_pwm_frequency(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%d Hz", pwm_freq);
-    }
-    break;
-
-    case 10: // microsd
-    {
-        // const char *microsd_status = get_microsd_status(); // Replace with actual function
-        printed = snprintf(pcInsert, iInsertLen, "%s", microsd_status);
+        if (tm_info)
+        {
+            printf("TIME: %Y-%m-%d %H:%M:%S", tm_info);
+            // Format the time as "YYYY-MM-DD HH:MM:SS"
+            printed = strftime(pcInsert, iInsertLen, "%Y-%m-%d %H:%M:%S", tm_info);
+        }
+        else
+        {
+            printed = snprintf(pcInsert, iInsertLen, "NTP Sync Failed");
+        }
     }
     break;
 
