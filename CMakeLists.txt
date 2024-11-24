@@ -25,6 +25,12 @@ execute_process(COMMAND
 add_executable(${PROGRAM_NAME}
     main.c
 )
+# tell CMake where to find other source code
+add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
+add_library(kissfft STATIC
+        lib/kissfft/kiss_fft.c
+        lib/kissfft/kiss_fftr.c
+        )
 
 target_include_directories(${PROGRAM_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
@@ -50,7 +56,14 @@ target_link_libraries(${PROGRAM_NAME}
     pico_lwip_sntp           
     pico_stdlib
     hardware_adc
-    hardware_pwm
+    hardware_pwm 
+    hardware_timer 
+    hardware_i2c 
+    hardware_spi 
+    hardware_gpio
+    hardware_uart 
+    FatFs_SPI
+    kissfft
 )
 
 pico_enable_stdio_usb(${PROGRAM_NAME} 1)
