@@ -176,6 +176,8 @@ void init_sdcard(){
 
 // Function to read a file and print its content over serial
 void readfile(char filename[]) {
+    char time[32];     // To hold the time value
+    float frequency;   // To hold the frequency value
     // Open file for reading
     fr = f_open(&fil, filename, FA_READ);
     if (fr != FR_OK) {
@@ -187,7 +189,17 @@ void readfile(char filename[]) {
     printf("Reading from file '%s':\r\n", filename);
     printf("---\r\n");
     while (f_gets(buf, sizeof(buf), &fil)) {
-        printf(buf);
+        // Skip the header row
+        if (strstr(buf, "Time") != NULL) {
+            continue;
+        }
+
+        // Parse the time and frequency from the line
+        if (sscanf(buf, "%31[^,],%*[^,],%f", time, &frequency) == 2) {
+            printf("Time: %s, Frequency: %.2f Hz\n", time, frequency);
+        } else {
+            printf("ERROR: Could not parse line: %s\n", buf);
+        }
     }
     printf("\r\n---\r\n");
 
